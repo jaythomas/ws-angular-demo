@@ -2,27 +2,50 @@ angular
   .module('app')
   .component('unitView', {
     bindings: {
-      description: '@'
+      incrementUnits: '<',
+      unit: '='
     },
     controller: controller,
     controllerAs: 'vm',
     template: `
       <div class="pure-g">
-        <div class="pure-u-1-2">{{ vm.description }}</div>
-        <div class="pure-u-1-2">{{ vm.status }}</div>
+        <div class="pure-u-1-2">
+          {{ vm.unit.description }}
+        </div>
+        <div
+          class="pure-u-1-2"
+          style="{{ vm.style }}">
+          {{ vm.unit.status }}
+        </div>
       </div>
     `
   })
 
-function controller() {
+controller.$inject = ['$scope', 'callbackHandlerFactory', 'statusesFactory']
 
-  var statuses = [
-    "Not Yet Started",
-    "Running",
-    "Passed",
-    "Failed"
-  ]
+function controller($scope, callbackHandlerFactory, statusesFactory) {
 
-  this.status = statuses[0]
+  callbackHandlerFactory.register(callback)
+
+  var vm = this
+
+  var statuses = statusesFactory.getStatuses()
+
+  setStatus(0)
+
+  function setStatus(idx) {
+    vm.unit.status = statuses[idx].msg
+    vm.style = statuses[idx].style
+  }
+
+  function callback(payload) {
+    var unitDescription = payload.data.split(':')[0]
+    var unitStatusCode = payload.data.split(':')[1]
+    if (unitDescription === vm.unit.description) {
+      setStatus(unitStatusCode)
+      vm.incrementUnits(unitStatusCode)
+      $scope.$digest()
+    }
+  }
 
 }

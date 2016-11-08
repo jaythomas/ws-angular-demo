@@ -41,44 +41,45 @@ var tests = [
 ]
 
 function server(conn) {
-  function runTests(tests, idx) {
 
-    function emitRunning(description) {
-      conn.sendText(description + ":running")
-    }
+  function runTests(tests) {
+    tests.forEach(function(test) {
+      function emitRunning(description) {
+        var statusCode = "1"
+        conn.sendText(description + ":" + statusCode)
+      }
 
-    function emitDone(description, passFailBool) {
-      conn.sendText(description + ":" + passFailBool.toString())
-    }
+      function emitDone(description, testRun) {
+        testRun(function(passFailBool) {
+          var statusCode
+          if (passFailBool) {
+            statusCode = "2"
+          } else {
+            statusCode = "3"
+          }
+          conn.sendText(description + ":" + statusCode)
+        })
+      }
 
-    // No more recursion
-    if (tests.length <= idx) {
-      return
-    }
-
-    if (idx === undefined) {
-      runTests(tests, 0)
-    } else {
-      var test = tests[idx]
       emitRunning(test.description)
       emitDone(test.description, test.run)
-      runTests(tests, idx + 1)
-    }
-
+    })
   }
 
-  console.log("WS server open")
+  console.log("[WS] Connection open on port " + port)
 
   conn.on("text", function(str) {
-    console.log("Received button click: " + str)
+    console.log("[WS] Received message: \"" + str + "\"")
     runTests(tests)
   })
 
   conn.on("close", function (/*code, reason*/) {
-    console.log("Connection closed")
+    console.log("[WS] Connection closed")
   })
 
 }
 
 
-ws.createServer(server).listen(port)
+ws
+  .createServer(server)
+  .listen(port)

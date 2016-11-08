@@ -1,22 +1,38 @@
 angular
   .module('app')
   .component('buttonView', {
-    bindings: {},
+    bindings: {
+      resetUnits: '<'
+    },
     controller: controller,
     controllerAs: 'vm',
     template: `
       <button
         class="pure-button pure-button-primary"
-        ng-disable="buttonState()">
-        Run!
+        ng-click="vm.onClick()"
+        ng-disabled="vm.isDisabled()">
+        Start Tests
       </button>
     `
   })
 
-function controller() {
+controller.$inject = ['callbackHandlerFactory']
 
-  this.buttonState = function() {
-    return false
+function controller(callbackHandlerFactory) {
+
+  var vm = this
+
+  // Initialize state
+  var buttonState = false
+
+  vm.onClick = function() {
+    buttonState = true
+    vm.resetUnits()
+    callbackHandlerFactory.emitButtonClick()
+  }
+
+  vm.isDisabled = function() {
+    return buttonState
   }
 
 }
